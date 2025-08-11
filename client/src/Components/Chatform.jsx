@@ -20,9 +20,9 @@ const Chatform = ({
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-    alert("Please upload only image files");
-    e.target.value = ""; // Clear the input
-    return;
+      alert("Please upload only image files");
+      e.target.value = ""; // Clear the input
+      return;
     }
 
     setAttachedFile(file);

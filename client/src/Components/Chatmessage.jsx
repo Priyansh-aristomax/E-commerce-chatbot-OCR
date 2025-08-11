@@ -281,20 +281,24 @@ const Chatmessage = ({ role, text, image = [], price = [], filename = null }) =>
   };
 
   const renderContent = () => {
-    const cleanedText =
-      typeof text === 'string'
-        ? text
-            .replace('Here is a recommended product:', '')
-            .replace(/price:\s*([\d.]+)/gi, '')
-            .trim()
-        : '';
+    // 🔧 FIX: Don't remove text when displaying with images
+    const cleanedText = typeof text === 'string' ? text.trim() : '';
+    
+    // Only clean specific bot responses, keep user text intact
+    const finalText = role === 'model' 
+      ? cleanedText
+          .replace('Here is a recommended product:', '')
+          .replace(/price:\s*([\d.]+)/gi, '')
+          .trim()
+      : cleanedText;
   
-    const textLines = cleanedText.split('\n').filter(line => line.trim() !== '');
+    const textLines = finalText.split('\n').filter(line => line.trim() !== '');
   
     return (
       <>
-        {textLines.map((line, idx) => (
-          <p key={idx} style={{ marginBottom: '6px' }}>{line}</p>
+        {/* 🔧 FIX: Always show text if it exists */}
+        {finalText && textLines.map((line, idx) => (
+          <p key={idx} style={{ marginBottom: '6px', wordBreak: 'break-word' }}>{line}</p>
         ))}
         {images.length > 0 && (role === 'user' ? renderUserImages() : renderProductImageGrid())}
         {role === 'user' && filename && renderFileAttachment(filename)}

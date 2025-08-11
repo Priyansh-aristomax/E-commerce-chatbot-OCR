@@ -35,56 +35,69 @@ const App = () => {
     }
   }, [chathistory]);
 
-  const generateBotResponse = async (history, descriptionOverride = null) => {
-    const prompt = descriptionOverride || productDescription || history[history.length - 1].text;
-    const updateHistory = (text, images = [], prices = []) => {
-      setChathistory((prev) => {
-        const newHistory = [
-          ...prev.filter((msg) => msg.text !== "Thinking..."),
-          { from: "model", text, image: images, price: prices, sessionId },
-        ].slice(-maxHistoryLength);
-        return newHistory;
-      });
-    };
-
-    try {
-      const formattedHistory = history.slice(0, -1).map((msg) => ({
-        role: msg.from === "user" ? "user" : "assistant",
-        content: msg.text,
-      }));
-
-      const response = await fetch("http://localhost:8000/generate-response", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt,
-          chat_history: formattedHistory,
-          session_id: sessionId,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        updateHistory("Error: " + (errorData.detail || "Unknown error occurred."));
-        return;
-      }
-
-      const data = await response.json();
-      const images = data.products?.map((p) => p.image) || [];
-      const prices = data.products?.map((p) => p.price) || [];
-      updateHistory(data.response, images, prices);
-    } catch (error) {
-      console.error("Fetch/network error:", error);
-      updateHistory("Sorry, the chatbot is unavailable due to a network error.");
-    }
+const generateBotResponse = async (history, descriptionOverride = null) => {
+  // ✅ Use descriptionOverride if passed, else productDescription (only once), else last user text
+  let prompt;
+  if (descriptionOverride) {
+    prompt = descriptionOverride;
+  } else if (productDescription) {
+    prompt = productDescription;
+    setProductDescription(null); // reset so it won't override text-only queries
+  } else {
+    prompt = history[history.length - 1].text;
+  }
+  const updateHistory = (text, images = [], prices = []) => {
+    setChathistory((prev) => {
+      const newHistory = [
+        ...prev.filter((msg) => msg.text !== "Thinking..."),
+        { from: "model", text, image: images, price: prices, sessionId },
+      ].slice(-maxHistoryLength);
+      return newHistory;
+    });
   };
+
+  try {
+    const formattedHistory = history.slice(0, -1).map((msg) => ({
+      role: msg.from === "user" ? "user" : "assistant",
+      content: msg.text,
+    }));
+
+    const response = await fetch("http://localhost:8000/generate-response", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        prompt,
+        chat_history: formattedHistory,
+        session_id: sessionId,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      updateHistory("Error: " + (errorData.detail || "Unknown error occurred."));
+      return;
+    }
+
+    const data = await response.json();
+    const images = data.products?.map((p) => p.image) || [];
+    const prices = data.products?.map((p) => p.price) || [];
+    updateHistory(data.response, images, prices);
+  } catch (error) {
+    console.error("Fetch/network error:", error);
+    updateHistory("Sorry, the chatbot is unavailable due to a network error.");
+  }
+};
 
   const handleFileAndMessage = async (file, usermessage = "") => {
     // Handle text-only messages
     if (!file) {
+      if (!usermessage || usermessage.trim() === "") {
+        console.log("❌ Empty message - not processing");
+        return;
+      }
       const userMessageObj = {
         from: "user",
-        text: usermessage,
+        text: usermessage.trim(),
         sessionId,
       };
 
@@ -98,7 +111,7 @@ const App = () => {
       return;
     }
 
-    // Handle file uploads - FIXED LOGIC
+    // Handle file uploads
     setHasFileAttached(true);
 
     // Create image URL for preview if it's an image
@@ -107,7 +120,7 @@ const App = () => {
     // ALWAYS add user message with uploaded file to chat history FIRST
     const userMessageObj = {
       from: "user",
-      // text: usermessage || `Uploaded: ${file.name}`,
+      text: usermessage && usermessage.trim(), //? usermessage.trim() : `Uploaded: ${file.name}`, // 🔧 FIX: Show text OR filename
       image: imageUrl ? [imageUrl] : undefined,
       // filename: file.name,
       sessionId,

@@ -59,6 +59,7 @@ coverage.xml
 
 # Virtualenv
 venv/
+new_env/
 .venv/
 ENV/
 env/
