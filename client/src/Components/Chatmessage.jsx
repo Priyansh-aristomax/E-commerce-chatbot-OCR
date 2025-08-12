@@ -1,12 +1,9 @@
 import React, { useRef, useState, useEffect } from 'react';
 import ChatbotIcon from './ChatboxIcon';
 import Usericon from './ChatuserIcon';
-import { VscChevronLeft,VscChevronRight } from "react-icons/vsc"
-import pdfIcon from '../assets/pdf.png';
-import docxIcon from '../assets/docx.png';
+import { VscChevronLeft, VscChevronRight } from "react-icons/vsc";
 
-
-const Chatmessage = ({ role, text, image = [], price = [], filename = null }) => {
+const Chatmessage = ({ role, text, image = [], price = [] }) => {
   const scrollRef = useRef(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(false);
@@ -49,7 +46,7 @@ const Chatmessage = ({ role, text, image = [], price = [], filename = null }) =>
     }
   }, []);
 
-  // Simple user image display - just images without product styling
+  // Simple user image display
   const renderUserImages = () => {
     return (
       <div style={{ marginTop: '16px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
@@ -70,46 +67,6 @@ const Chatmessage = ({ role, text, image = [], price = [], filename = null }) =>
     );
   };
 
-  // Render file attachments (PDF/DOCX) with icons
-  const renderFileAttachment = (filename) => {
-    const getFileIcon = (filename) => {
-      const extension = filename.split('.').pop().toLowerCase();
-      switch (extension) {
-        case 'pdf':
-          return pdfIcon;
-        case 'doc':
-        case 'docx':
-          return docxIcon;
-        default:
-          return null;
-      }
-    };
-
-    const iconSrc = getFileIcon(filename);
-
-    return (
-      <div style={{ 
-        marginTop: '8px', 
-        padding: '8px 12px', 
-        backgroundColor: '#f5f5f5', 
-        borderRadius: '8px',
-        border: '1px solid #ddd',
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '8px'
-      }}>
-        {iconSrc && (
-          <img 
-            src={iconSrc} 
-            alt="File icon" 
-            style={{ width: '20px', height: '20px' }}
-          />
-        )}
-        <span style={{ fontSize: '14px', color: '#333' }}>{filename}</span>
-      </div>
-    );
-  };
-
   // Product image grid for bot messages with buy buttons and prices
   const renderProductImageGrid = () => {
     const grouped = groupImages(images);
@@ -119,7 +76,6 @@ const Chatmessage = ({ role, text, image = [], price = [], filename = null }) =>
         className="image-grid-container"
         style={{ position: 'relative', marginTop: '16px' }}
       >
-        {/* Scroll container */}
         <div
           ref={scrollRef}
           className="image-grid"
@@ -225,7 +181,7 @@ const Chatmessage = ({ role, text, image = [], price = [], filename = null }) =>
         </div>
 
         {/* Left Arrow */}
-        {images.length > 2 &&showLeftArrow && (
+        {images.length > 2 && showLeftArrow && (
           <button
             onClick={() => handleScroll('left')}
             style={{
@@ -246,7 +202,7 @@ const Chatmessage = ({ role, text, image = [], price = [], filename = null }) =>
             }}
             aria-label="Scroll Left"
           >
-               <VscChevronLeft />
+            <VscChevronLeft />
           </button>
         )}
 
@@ -272,8 +228,7 @@ const Chatmessage = ({ role, text, image = [], price = [], filename = null }) =>
             }}
             aria-label="Scroll Right"
           >
-               <VscChevronRight />
-
+            <VscChevronRight />
           </button>
         )}
       </div>
@@ -281,10 +236,8 @@ const Chatmessage = ({ role, text, image = [], price = [], filename = null }) =>
   };
 
   const renderContent = () => {
-    // 🔧 FIX: Don't remove text when displaying with images
     const cleanedText = typeof text === 'string' ? text.trim() : '';
     
-    // Only clean specific bot responses, keep user text intact
     const finalText = role === 'model' 
       ? cleanedText
           .replace('Here is a recommended product:', '')
@@ -296,12 +249,10 @@ const Chatmessage = ({ role, text, image = [], price = [], filename = null }) =>
   
     return (
       <>
-        {/* 🔧 FIX: Always show text if it exists */}
         {finalText && textLines.map((line, idx) => (
           <p key={idx} style={{ marginBottom: '6px', wordBreak: 'break-word' }}>{line}</p>
         ))}
         {images.length > 0 && (role === 'user' ? renderUserImages() : renderProductImageGrid())}
-        {role === 'user' && filename && renderFileAttachment(filename)}
       </>
     );
   };

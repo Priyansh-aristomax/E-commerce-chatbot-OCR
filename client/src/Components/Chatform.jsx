@@ -28,12 +28,8 @@ const Chatform = ({
     setAttachedFile(file);
     onFileAttachChange?.(true); // Notify parent that file is attached
 
-    if (file.type.startsWith("image/")) {
-      const imageUrl = URL.createObjectURL(file);
-      setPreviewURL(imageUrl);
-    } else {
-      setPreviewURL(file.name);
-    }
+    const imageUrl = URL.createObjectURL(file);
+    setPreviewURL(imageUrl);
   };
 
   const handleformSubmit = async (e) => {
@@ -71,29 +67,16 @@ const Chatform = ({
     <form className="chat-form" onSubmit={handleformSubmit}>
       {previewURL && (
         <div className="file-preview-container">
-          {attachedFile?.type?.startsWith("image/") ? (
-            <div className="preview-wrapper">
-              <img src={previewURL} alt="preview" className="file-thumbnail" />
-              <button
-                type="button"
-                className="remove-btn"
-                onClick={handleRemoveFile}
-              >
-                X
-              </button>
-            </div>
-          ) : (
-            <div className="preview-wrapper non-image">
-              <span className="file-thumbnail">📄 {attachedFile?.name}</span>
-              <button
-                type="button"
-                className="remove-btn"
-                onClick={handleRemoveFile}
-              >
-                X
-              </button>
-            </div>
-          )}
+          <div className="preview-wrapper">
+            <img src={previewURL} alt="preview" className="file-thumbnail" />
+            <button
+              type="button"
+              className="remove-btn"
+              onClick={handleRemoveFile}
+            >
+              X
+            </button>
+          </div>
         </div>
       )}
 
@@ -124,7 +107,7 @@ const Chatform = ({
             type="button"
             className="material-symbols-outlined"
             onClick={() => fileInputRef.current.click()}
-            title="Attach file"
+            title="Attach image"
           >
             attach_file
           </button>

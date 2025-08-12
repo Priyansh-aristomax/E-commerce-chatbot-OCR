@@ -19,8 +19,6 @@ async def detect_women_clothing_keywords(ocr_text: str) -> List[str]:
     Returns a flat list of all detected fashion keywords
     """
     try:
-        # logger.info("🔍 Starting women's clothing keyword detection...")
-        
         if not ocr_text or not ocr_text.strip():
             logger.warning("Empty OCR text provided")
             return []
@@ -82,12 +80,11 @@ async def detect_women_clothing_keywords(ocr_text: str) -> List[str]:
             
             keywords = json.loads(response_text)
             
-            # Ensure it's a list and clean keywords - NO VALIDATION
+            # Ensure it's a list and clean keywords
             if isinstance(keywords, list):
                 # Filter out empty strings and clean keywords
                 cleaned_keywords = [kw.strip().lower() for kw in keywords if kw and kw.strip()]
                 
-                # Skip validation - return all detected keywords
                 if cleaned_keywords:
                     logger.info(f"✅ Detected {len(cleaned_keywords)} fashion keywords")
                     
@@ -114,7 +111,7 @@ async def detect_women_clothing_keywords(ocr_text: str) -> List[str]:
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse JSON response: {e}")
             logger.error(f"Raw response: {response_text}")
-            return []  # Return empty list instead of fallback
+            return []
             
     except Exception as e:
         logger.error(f"Gemini keyword detection failed: {e}")
@@ -125,11 +122,9 @@ async def generate_product_description(keywords: List[str]) -> str:
     Generate product description from fashion keywords using Gemini
     """
     try:
-        # logger.info("📝 Generating product description from keywords...")
-        
         if not keywords:
             logger.warning("No keywords provided for description generation")
-            return ""  # Return empty string instead of fallback
+            return ""
         
         # Initialize NEW Gemini model instance
         model = genai.GenerativeModel("gemini-1.5-flash")
@@ -174,15 +169,14 @@ async def generate_product_description(keywords: List[str]) -> str:
         
     except Exception as e:
         logger.error(f"Product description generation failed: {e}")
-        return ""  # Return empty string on failure
+        return ""
 
 async def process_fashion_keywords(ocr_text: str) -> Dict:
     """
     Main function to process OCR text, extract keywords, and generate product description
     """
     try:
-        
-        # Step 1: Detect keywords using Gemini (fresh call each time)
+        # Step 1: Detect keywords using Gemini
         keywords = await detect_women_clothing_keywords(ocr_text)
         
         # Step 2: Only generate description if keywords found

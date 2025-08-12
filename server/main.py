@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 import chromadb
 from chromadb.config import Settings
 import google.generativeai as genai
-from ocr_utils import extract_text  # ✅ Use ocr_utils.py for OCR
+from ocr_utils import extract_text_from_image
 from semantic_filter import process_fashion_keywords
 
 # -------------------- Logging --------------------
@@ -27,7 +27,6 @@ if not GEMINI_API_KEY:
 genai.configure(api_key=GEMINI_API_KEY)
 
 # -------------------- Custom Gemini Embedder --------------------
-# -------------------- Fixed Custom Gemini Embedder --------------------
 class GeminiEmbeddingFunction:
     def __init__(self, model="models/embedding-001", api_key=None):
         self.model = model
@@ -97,16 +96,11 @@ def get_chroma_collection():
             settings=Settings(anonymized_telemetry=False)
         )
 
-        # test_input = ["test embedding"]
-        # test_output = embedding_fn(test_input)
-        # logger.info(f"Embedding test - input: {test_input}, output len: {len(test_output[0])}")
-
         existing_collections = client.list_collections()
         collection_exists = any(col.name == "Clothes_products" for col in existing_collections)
 
         if collection_exists:
             collection = client.get_collection("Clothes_products")
-            # logger.info("Using existing collection")
             if hasattr(collection, '_embedding_function'):
                 if collection._embedding_function.__class__.__name__ != embedding_fn.__class__.__name__:
                     logger.warning("Existing collection uses different embedding function")
@@ -208,7 +202,7 @@ async def generate_chatbot_response(request: PromptRequest, collection):
 # -------------------- Generate Response Endpoint --------------------
 @app.post("/generate-response")
 async def generate_response(request: PromptRequest, collection=Depends(get_chroma_collection)):
-    r"""
+    """
     Original chatbot endpoint - now uses the extracted function
     """
     return await generate_chatbot_response(request, collection)
@@ -217,8 +211,13 @@ async def generate_response(request: PromptRequest, collection=Depends(get_chrom
 @app.post("/upload-file")
 async def upload_file(file: UploadFile = File(...)):
     logger.info("✅ Upload endpoint hit")
+    
+    # Validate file type
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Only image files are supported")
+    
     try:
-        # Step 1: Save uploaded file
+        # Step 1: Save uploaded image
         upload_dir = "uploaded_files"
         os.makedirs(upload_dir, exist_ok=True)
         file_location = os.path.join(upload_dir, file.filename)
@@ -226,16 +225,16 @@ async def upload_file(file: UploadFile = File(...)):
         with open(file_location, "wb") as f:
             f.write(await file.read())
 
-        logger.info(f"📁 File saved at {file_location}")
+        logger.info(f"📁 Image saved at {file_location}")
 
         # Step 2: Extract text using OCR
-        extracted_text = extract_text(file_location)
+        extracted_text = extract_text_from_image(file_location)
         logger.info(f"📝 Extracted text from {file.filename} (length: {len(extracted_text)})")
 
         if not extracted_text or extracted_text.startswith("OCR extraction failed"):
             return {
                 "success": False,
-                "message": "Failed to extract text from file",
+                "message": "Failed to extract text from image",
                 "filename": file.filename,
                 "error": extracted_text
             }
@@ -248,23 +247,23 @@ async def upload_file(file: UploadFile = File(...)):
         product_description = fashion_result.get("product_description", "")
         if not product_description or fashion_result.get("keywords_found", 0) == 0:
             return {
-        "success": False,
-        "message": "Uploaded file is not related to clothes. Please try again.",
-        "filename": file.filename,
-        "extracted_text": extracted_text.strip(),
-        "fashion_keywords": fashion_result.get("keywords", []),
-        "keywords_count": fashion_result.get("keywords_found", 0),
-        "generated_description": product_description,
-        "chatbot_response": "",
-        "recommended_products": [],
-        "total_products": 0,
-        "keyword_detection_success": False
-        }
+                "success": False,
+                "message": "Uploaded image is not related to clothes. Please try again.",
+                "filename": file.filename,
+                "extracted_text": extracted_text.strip(),
+                "fashion_keywords": fashion_result.get("keywords", []),
+                "keywords_count": fashion_result.get("keywords_found", 0),
+                "generated_description": product_description,
+                "chatbot_response": "",
+                "recommended_products": [],
+                "total_products": 0,
+                "keyword_detection_success": False
+            }
         
         if not product_description:
             return {
                 "success": False,
-                "message": "Failed to generate product description from uploaded file",
+                "message": "Failed to generate product description from uploaded image",
                 "filename": file.filename,
                 "error": "No product description generated"
             }
@@ -289,7 +288,7 @@ async def upload_file(file: UploadFile = File(...)):
         # Step 6: Return combined response
         return {
             "success": True,
-            "message": "File processed and product recommendations generated",
+            "message": "Image processed and product recommendations generated",
             "filename": file.filename,
             "extracted_text": extracted_text.strip(),
             "fashion_keywords": fashion_result.get("keywords", []),
@@ -303,4 +302,4 @@ async def upload_file(file: UploadFile = File(...)):
 
     except Exception as e:
         logger.error(f"❌ Upload or processing failed: {e}")
-        raise HTTPException(status_code=500, detail=f"File processing failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Image processing failed: {str(e)}")

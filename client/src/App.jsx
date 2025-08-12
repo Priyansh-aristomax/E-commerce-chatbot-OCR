@@ -36,13 +36,12 @@ const App = () => {
   }, [chathistory]);
 
 const generateBotResponse = async (history, descriptionOverride = null) => {
-  // ✅ Use descriptionOverride if passed, else productDescription (only once), else last user text
   let prompt;
   if (descriptionOverride) {
     prompt = descriptionOverride;
   } else if (productDescription) {
     prompt = productDescription;
-    setProductDescription(null); // reset so it won't override text-only queries
+    setProductDescription(null);
   } else {
     prompt = history[history.length - 1].text;
   }
@@ -111,18 +110,17 @@ const generateBotResponse = async (history, descriptionOverride = null) => {
       return;
     }
 
-    // Handle file uploads
+    // Handle image uploads
     setHasFileAttached(true);
 
-    // Create image URL for preview if it's an image
-    const imageUrl = file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined;
+    // Create image URL for preview
+    const imageUrl = URL.createObjectURL(file);
 
-    // ALWAYS add user message with uploaded file to chat history FIRST
+    // Add user message with uploaded image to chat history
     const userMessageObj = {
       from: "user",
-      text: usermessage && usermessage.trim(), //? usermessage.trim() : `Uploaded: ${file.name}`, // 🔧 FIX: Show text OR filename
-      image: imageUrl ? [imageUrl] : undefined,
-      // filename: file.name,
+      text: usermessage && usermessage.trim(),
+      image: [imageUrl],
       sessionId,
     };
 
@@ -159,7 +157,7 @@ const generateBotResponse = async (history, descriptionOverride = null) => {
         };
 
         if (data.success) {
-          // File is relevant to clothes - show the generated description and products
+          // Image is relevant to clothes - show the generated description and products
           let responseText = "";
           
           // Add the generated description from the API
@@ -181,7 +179,7 @@ const generateBotResponse = async (history, descriptionOverride = null) => {
           // Set product description for context
           setProductDescription(data.generated_description);
         } else {
-          // File is NOT relevant to clothes
+          // Image is NOT relevant to clothes
           botMessage.text = data.message || "This image is not related to women's clothing. Please upload a clothing-related image.";
         }
 
@@ -198,7 +196,7 @@ const generateBotResponse = async (history, descriptionOverride = null) => {
           ...filtered,
           {
             from: "model",
-            text: "Sorry, there was an error processing your file. Please try again.",
+            text: "Sorry, there was an error processing your image. Please try again.",
             sessionId
           }
         ].slice(-maxHistoryLength);
@@ -253,7 +251,6 @@ const generateBotResponse = async (history, descriptionOverride = null) => {
               text={message.text}
               image={message.image}
               price={message.price}
-              filename={message.filename}
             />
           ))}
         </div>
