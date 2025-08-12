@@ -61,7 +61,7 @@ const generateBotResponse = async (history, descriptionOverride = null) => {
       content: msg.text,
     }));
 
-    const response = await fetch("http://localhost:8000/generate-response", {
+    const response = await fetch("http://13.203.28.253/generate-response", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -137,7 +137,7 @@ const generateBotResponse = async (history, descriptionOverride = null) => {
       formData.append("file", file);
 
       // Make API call
-      const response = await fetch("http://localhost:8000/upload-file", {
+      const response = await fetch("http://13.203.28.253/upload-file", {
         method: "POST",
         body: formData,
       });
