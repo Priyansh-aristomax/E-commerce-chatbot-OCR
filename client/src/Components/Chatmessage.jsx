@@ -156,7 +156,7 @@ const Chatmessage = ({ role, text, image = [], price = [] }) => {
                         Price: {productPrice !== 'N/A' ? `${productPrice}` : 'N/A'}
                       </div>
                     </div>
-                    <a
+                    <button
                       href="#"
                       style={{
                         display: 'inline-block',
@@ -172,7 +172,7 @@ const Chatmessage = ({ role, text, image = [], price = [] }) => {
                       onMouseLeave={(e) => (e.target.style.border = '1px solid #a6a6a6')}
                     >
                       Buy Product
-                    </a>
+                    </button>
                   </div>
                 );
               })}
