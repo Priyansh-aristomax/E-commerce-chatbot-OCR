@@ -212,7 +212,7 @@ const generateBotResponse = async (history, descriptionOverride = null) => {
         <header className="header-container">
           <div className="logo-section">
             <img src={logo} alt="AristoMax Logo" className="company-logo" />
-            <h1 className="gradient-header">ShopBuddy</h1>
+            <h1 className="gradient-header">RecoLens</h1>
           </div>
           <div className="blue-bar"></div>
         </header>
@@ -231,7 +231,7 @@ const generateBotResponse = async (history, descriptionOverride = null) => {
         <div className="chat-header">
           <div className="header-info">
             <ChatbotIcon />
-            <h1 className="logo-text">AristoMax - Chatbot</h1>
+            <h1 className="logo-text">RecoLens</h1>
           </div>
           <button onClick={() => setShowchatbot((prev) => !prev)} className="material-symbols-outlined">
             keyboard_arrow_down
